@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brahma Muhurta</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0E0B07;
+  color: #F0E2C4;
+  font-family: 'Space Mono', monospace;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.25rem 3rem;
+}
+
+.wrapper { width: 100%; max-width: 420px; }
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.7rem;
+  font-style: italic;
+  color: #C9A84C;
+  text-align: center;
+  margin-bottom: 0.2rem;
+}
+.subtitle {
+  text-align: center;
+  font-size: 0.55rem;
+  letter-spacing: 0.35em;
+  color: #5A4A2A;
+  margin-bottom: 2rem;
+}
+
+/* Live clock */
+.live-clock { text-align: center; margin-bottom: 1.75rem; }
+.time-display {
+  font-size: 3.2rem;
+  font-weight: 700;
+  color: #F0E2C4;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+.date-display { font-size: 0.65rem; color: #5A4A2A; margin-top: 0.4rem; letter-spacing: 0.12em; }
+.phase-display { font-size: 0.72rem; color: #E8833A; margin-top: 0.3rem; letter-spacing: 0.08em; }
+
+/* Active Brahma banner */
+.brahma-banner {
+  display: none;
+  border: 1px solid #E8833A;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  margin-bottom: 1.25rem;
+  font-size: 0.68rem;
+  color: #E8833A;
+  letter-spacing: 0.12em;
+  background: rgba(232,131,58,0.08);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* Card */
+.card {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(201,168,76,0.1);
+  border-radius: 12px;
+  padding: 1rem 1.2rem;
+  margin-bottom: 0.7rem;
+}
+.card-label {
+  font-size: 0.52rem;
+  letter-spacing: 0.3em;
+  color: #5A4A2A;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+}
+
+/* Time rows */
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.row:last-of-type { border-bottom: none; }
+.row-label { font-size: 0.68rem; color: #9A8060; }
+.row-val {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F0E2C4;
+}
+.row-val.sacred { color: #E8833A; }
+.row-val.muted { font-size: 0.8rem; color: #9A8060; font-weight: 400; }
+
+/* Countdown */
+.countdown-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.8rem;
+  margin-top: 0.2rem;
+  border-top: 1px solid rgba(201,168,76,0.08);
+}
+.countdown-label { font-size: 0.62rem; color: #5A4A2A; }
+.countdown-val { font-size: 0.85rem; color: #C9A84C; }
+
+/* Location */
+.loc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.loc-info { flex: 1; min-width: 0; }
+.loc-name { font-size: 0.72rem; color: #F0E2C4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.loc-coords { font-size: 0.58rem; color: #5A4A2A; margin-top: 2px; }
+
+.btn {
+  background: rgba(232,131,58,0.1);
+  border: 1px solid rgba(232,131,58,0.25);
+  border-radius: 6px;
+  color: #E8833A;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  padding: 0.38rem 0.6rem;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn:hover { background: rgba(232,131,58,0.2); }
+
+/* DST toggle */
+.dst-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  font-size: 0.65rem;
+  color: #9A8060;
+  gap: 1rem;
+}
+.dst-label { line-height: 1.4; }
+.toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; display: block; }
+.toggle input { display: none; }
+.toggle-track {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 11px;
+  transition: all 0.25s;
+}
+.toggle input:checked + .toggle-track { background: rgba(232,131,58,0.3); border-color: #E8833A; }
+.toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  background: #5A4A2A; border-radius: 50%;
+  transition: all 0.25s; pointer-events: none;
+}
+.toggle input:checked ~ .toggle-thumb { left: 21px; background: #E8833A; }
+
+.error { font-size: 0.68rem; color: #E8833A; text-align: center; padding: 0.5rem 0; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1>Brahma Muhurta</h1>
+  <div class="subtitle">SACRED SUN CLOCK</div>
+
+  <div class="live-clock">
+    <div class="time-display" id="clockDisplay">--:--:--</div>
+    <div class="date-display" id="dateDisplay">—</div>
+    <div class="phase-display" id="phaseDisplay">—</div>
+  </div>
+
+  <div class="brahma-banner" id="brahmaBanner">
+    ✦ BRAHMA MUHURTA IS ACTIVE ✦
+  </div>
+
+  <!-- Location & Settings -->
+  <div class="card">
+    <div class="card-label">Location</div>
+    <div class="loc-row">
+      <div class="loc-info">
+        <div class="loc-name" id="locName">Frisco, Texas</div>
+        <div class="loc-coords" id="locCoords">33.1507° N, 96.8236° W</div>
+      </div>
+      <button class="btn" onclick="detectLocation()">USE MY GPS</button>
+    </div>
+    <div class="dst-row">
+      <span class="dst-label">Ignore DST — stay on Natural (Standard) Time</span>
+      <label class="toggle">
+        <input type="checkbox" id="dstToggle" onchange="renderAll()">
+        <div class="toggle-track"></div>
+        <div class="toggle-thumb"></div>
+      </label>
+    </div>
+  </div>
+
+  <!-- Today's Brahma Muhurta -->
+  <div class="card">
+    <div class="card-label">Today — Brahma Muhurta Window</div>
+    <div id="brahmaRows"><div class="row"><span class="row-label">Loading…</span></div></div>
+    <div class="countdown-bar">
+      <span class="countdown-label" id="countdownLabel">—</span>
+      <span class="countdown-val" id="countdownVal">—</span>
+    </div>
+  </div>
+
+  <!-- Today's Solar Times -->
+  <div class="card">
+    <div class="card-label">Today — Solar Times</div>
+    <div id="solarRows"><div class="row"><span class="row-label">Loading…</span></div></div>
+  </div>
+
+  <!-- Tomorrow -->
+  <div class="card">
+    <div class="card-label">Tomorrow — Brahma Muhurta &amp; Sunrise</div>
+    <div id="tomorrowRows"><div class="row"><span class="row-label">Loading…</span></div></div>
+  </div>
+
+  <div class="error" id="errMsg"></div>
+
+</div>
+
+<script>
+let LAT = 33.1507, LON = -96.8236;
+let today = null, tomorrow = null;
+
+// ── API ─────────────────────────────────────────────────────────────
+async function fetchSun(lat, lon, dateStr) {
+  const url = `https://api.sunrise-sunset.org/json?lat=${lat}&lng=${lon}&date=${dateStr}&formatted=0`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  if (d.status !== 'OK') throw new Error(d.status);
+  const sr = new Date(d.results.sunrise);
+  const ss = new Date(d.results.sunset);
+  return {
+    sunrise:     sr,
+    sunset:      ss,
+    brahmaStart: new Date(sr - 96 * 60000),
+    brahmaMid:   new Date(sr - 72 * 60000),
+    brahmaEnd:   new Date(sr - 48 * 60000),
+  };
+}
+
+function dateStr(offsetDays = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().split('T')[0];
+}
+
+async function loadData() {
+  document.getElementById('errMsg').textContent = '';
+  try {
+    [today, tomorrow] = await Promise.all([
+      fetchSun(LAT, LON, dateStr(0)),
+      fetchSun(LAT, LON, dateStr(1))
+    ]);
+    renderAll();
+  } catch(e) {
+    document.getElementById('errMsg').textContent =
+      '⚠ Could not load solar data — check your internet connection. (Error: ' + e.message + ')';
+  }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────
+function dstActive() {
+  const now = new Date();
+  return now.getTimezoneOffset() < new Date(now.getFullYear(), 0, 1).getTimezoneOffset();
+}
+
+function fmtTime(date) {
+  if (!date) return '—';
+  let d = new Date(date.getTime());
+  if (document.getElementById('dstToggle').checked && dstActive()) {
+    d = new Date(d - 60 * 60000); // rewind 1hr to undo DST jump
+  }
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+}
+
+function fmtDuration(ms) {
+  if (ms <= 0) return 'now';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  const s = Math.floor((ms % 60000) / 1000);
+  if (h > 0) return `${h}h ${m}m ${s}s`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function solarPhase(now) {
+  if (!today) return '—';
+  const t = now.getTime();
+  if (t >= today.brahmaStart.getTime() && t < today.brahmaEnd.getTime()) return '✦ BRAHMA MUHURTA';
+  if (t < today.brahmaStart.getTime()) return 'Night';
+  if (t < today.sunrise.getTime()) return 'Pre-Dawn';
+  const noon = (today.sunrise.getTime() + today.sunset.getTime()) / 2;
+  if (t < noon) return 'Morning';
+  if (t < today.sunset.getTime() - 3600000) return 'Afternoon';
+  if (t < today.sunset.getTime()) return 'Golden Hour';
+  return 'Evening';
+}
+
+// ── Render ───────────────────────────────────────────────────────────
+function renderAll() {
+  if (!today) return;
+  const now = new Date();
+  const inBrahma = now >= today.brahmaStart && now <= today.brahmaEnd;
+  document.getElementById('brahmaBanner').style.display = inBrahma ? 'block' : 'none';
+
+  // Brahma rows
+  const brahmaItems = [
+    { label: 'Start', val: today.brahmaStart },
+    { label: 'Mid',   val: today.brahmaMid   },
+    { label: 'End',   val: today.brahmaEnd   },
+  ];
+  document.getElementById('brahmaRows').innerHTML = brahmaItems.map(i => `
+    <div class="row">
+      <span class="row-label">${i.label}</span>
+      <span class="row-val sacred">${fmtTime(i.val)}</span>
+    </div>`).join('');
+
+  // Solar rows
+  const daylight = ((today.sunset - today.sunrise) / 3600000).toFixed(1);
+  document.getElementById('solarRows').innerHTML = `
+    <div class="row">
+      <span class="row-label">Sunrise</span>
+      <span class="row-val">${fmtTime(today.sunrise)}</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Sunset</span>
+      <span class="row-val">${fmtTime(today.sunset)}</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Daylight</span>
+      <span class="row-val muted">${daylight} hrs</span>
+    </div>`;
+
+  // Tomorrow rows
+  document.getElementById('tomorrowRows').innerHTML = `
+    <div class="row">
+      <span class="row-label">Brahma Start</span>
+      <span class="row-val sacred">${fmtTime(tomorrow.brahmaStart)}</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Brahma Mid</span>
+      <span class="row-val sacred">${fmtTime(tomorrow.brahmaMid)}</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Brahma End</span>
+      <span class="row-val sacred">${fmtTime(tomorrow.brahmaEnd)}</span>
+    </div>
+    <div class="row">
+      <span class="row-label">Sunrise</span>
+      <span class="row-val">${fmtTime(tomorrow.sunrise)}</span>
+    </div>`;
+}
+
+// ── Clock tick ───────────────────────────────────────────────────────
+let lastDate = new Date().toDateString();
+
+function tick() {
+  const now = new Date();
+
+  // Midnight refresh
+  if (now.toDateString() !== lastDate) {
+    lastDate = now.toDateString();
+    loadData();
+  }
+
+  // Display clock (with optional DST offset)
+  let display = new Date(now);
+  if (document.getElementById('dstToggle').checked && dstActive()) {
+    display = new Date(display - 60 * 60000);
+  }
+  document.getElementById('clockDisplay').textContent =
+    display.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+  document.getElementById('dateDisplay').textContent =
+    display.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase();
+  document.getElementById('phaseDisplay').textContent = solarPhase(now);
+
+  // Countdown
+  if (today) {
+    let lbl = '', ms = 0;
+    if (now < today.brahmaStart)  { lbl = 'Brahma starts in';        ms = today.brahmaStart - now; }
+    else if (now < today.brahmaEnd)    { lbl = 'Brahma ends in';          ms = today.brahmaEnd - now; }
+    else if (now < today.sunrise)      { lbl = 'Sunrise in';              ms = today.sunrise - now; }
+    else if (now < today.sunset)       { lbl = 'Sunset in';               ms = today.sunset - now; }
+    else if (tomorrow)                 { lbl = "Tomorrow's Brahma in";    ms = tomorrow.brahmaStart - now; }
+    document.getElementById('countdownLabel').textContent = lbl;
+    document.getElementById('countdownVal').textContent   = fmtDuration(ms);
+
+    // Banner
+    const inBrahma = now >= today.brahmaStart && now <= today.brahmaEnd;
+    document.getElementById('brahmaBanner').style.display = inBrahma ? 'block' : 'none';
+  }
+}
+
+// ── Location ─────────────────────────────────────────────────────────
+async function reverseGeocode(la, lo) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${la}&lon=${lo}&format=json`);
+    const d = await r.json();
+    const city = d.address.city || d.address.town || d.address.village || d.address.county || '';
+    const state = d.address.state || '';
+    return city ? `${city}, ${state}` : '';
+  } catch { return ''; }
+}
+
+async function detectLocation() {
+  if (!navigator.geolocation) { alert('Geolocation not supported by this browser.'); return; }
+  document.getElementById('locName').textContent = 'Detecting…';
+  navigator.geolocation.getCurrentPosition(async pos => {
+    LAT = pos.coords.latitude;
+    LON = pos.coords.longitude;
+    document.getElementById('locCoords').textContent = `${LAT.toFixed(4)}° N, ${LON.toFixed(4)}° W`;
+    const name = await reverseGeocode(LAT, LON);
+    document.getElementById('locName').textContent = name || `${LAT.toFixed(4)}°, ${LON.toFixed(4)}°`;
+    await loadData();
+  }, () => {
+    document.getElementById('locName').textContent = 'GPS denied — using Frisco, TX';
+  });
+}
+
+// ── Init ─────────────────────────────────────────────────────────────
+loadData();
+setInterval(tick, 1000);
+tick();
+</script>
+</body>
+</html>
